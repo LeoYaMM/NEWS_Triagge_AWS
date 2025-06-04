@@ -18,7 +18,6 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
-      background-color: lightgoldenrodyellow;
       transition: background-color 0.5s ease; /* para animar el cambio de color según clasificación */
     }
 
@@ -41,7 +40,7 @@
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: opacity 0.5s ease; /* para el fade-out */
+      transition: opacity 0.9s ease; /* para el fade-out */
     }
 
     .form-container.fade-out {
@@ -73,7 +72,7 @@
       border: 1px solid #cccccc;
       border-radius: 4px;
       outline: none;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.5s ease;
     }
 
     .form-group input:focus,
@@ -90,11 +89,15 @@
       border-radius: 4px;
       font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.5s ease;
     }
 
     .submit-button:hover {
       background-color: #2980b9;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     /* D) Spinner simple (tipo “logo de carga” de YouTube) */
@@ -115,9 +118,9 @@
     /* E) Contenedor centrado para el spinner y mensaje de resultado */
     .loader-container {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
     }
 
     .result-message {
@@ -132,7 +135,7 @@
     .reset-button {
       margin-top: 30px;
       padding: 8px 16px;
-      background-color: #ffffff;
+      background-color: #000000;
       color: #333333;
       border: 1px solid #333333;
       border-radius: 4px;
@@ -256,7 +259,7 @@
               text = "KTAS 5 - No urgente: Sin urgencia, puede esperar mucho tiempo";
               break;
             default:
-              bgColor = "#BDC3C7"; // Gris claro si algo falla
+              bgColor = "#5d5656"; // Gris claro si algo falla
               text = "Error: respuesta inesperada de la API";
               break;
           }
@@ -306,7 +309,7 @@
         <div className="app-container">
           {/* 1) Si aún no hay resultado, mostramos el formulario (con posible fade-out) */}
           {resultKtas === null && (
-            <div className={`form-container ${formFaded ? "fade-out" : ""}`}>
+            <div className={`form-container ${formFaded ? "fade-out hidden" : ""}`}>
               <h2>Clasificación KTAS</h2>
               <form onSubmit={handleSubmit}>
                 {/* ====== CAMPO Sex (sexo biológico): dropdown con dos opciones ====== */}
