@@ -2,480 +2,85 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NEWS KTAS</title>
-
-  <!-- 1) Carga de React, ReactDOM y Babel (para que podamos usar JSX directamente en este HTML) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- 2) Estilos generales y específicos -->
-  <style>
-    /* A) Reset mínimo de márgenes y padding para body */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      transition: background-color 0.5s ease; /* para animar el cambio de color según clasificación */
-    }
-
-    /* B) Contenedor principal centrado vertical y horizontalmente */
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 0 20px;
-      box-sizing: border-box;
-    }
-
-    /* C) Estilos del formulario */
-    .form-container {
-      width: 100%;
-      max-width: 400px;
-      background: #9e9d9d;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: opacity 0.9s ease; /* para el fade-out */
-    }
-
-    .form-container.fade-out {
-      opacity: 0;
-    }
-
-    .form-container h2 {
-      margin-top: 0;
-      text-align: center;
-      color: #333333;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-group label {
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #363636;
-    }
-
-    .form-group input,
-    .form-group select {
-      padding: 8px 10px;
-      font-size: 14px;
-      border: 1px solid #cccccc;
-      border-radius: 4px;
-      outline: none;
-      transition: border-color 0.5s ease;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: #888888;
-    }
-
-    .submit-button {
-      width: 100%;
-      padding: 10px;
-      background-color: #28a052;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.5s ease;
-    }
-
-    .submit-button:hover {
-      background-color: #2980b9;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* D) Spinner simple (tipo “logo de carga” de YouTube) */
-    .spinner {
-      display: inline-block;
-      width: 60px;
-      height: 60px;
-      border: 6px solid rgba(0, 0, 0, 0.1);
-      border-top-color: #3498db;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* E) Contenedor centrado para el spinner y mensaje de resultado */
-    .loader-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-
-    .result-message {
-      margin-top: 20px;
-      font-size: 24px;
-      font-weight: bold;
-      color: #ffffff;
-      text-align: center;
-    }
-
-    /* F) Botón de reiniciar */
-    .reset-button {
-      margin-top: 30px;
-      padding: 8px 16px;
-      background-color: #000000;
-      color: #333333;
-      border: 1px solid #333333;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-
-    .reset-button:hover {
-      background-color: #333333;
-      color: #ffffff;
-    }
-  </style>
+  <title>NEWS KTAS Frontend</title>
+  <!-- Vinculamos el CSS -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- El contenedor raíz donde React "montará" la aplicación -->
-  <div id="root"></div>
-
-  <!-- 3) Aquí va todo el código en React/JSX, compilado con Babel -->
-  <script type="text/babel">
-    // A) Importamos React y ReactDOM (vienen como variables globales gracias al CDN)
-    const { useState } = React;
-
-    // B) Componente principal de la aplicación
-    function App() {
-      // 1) Estados para cada campo del formulario:
-      const [sex, setSex] = useState("Male");       // Sexo biológico, dos opciones: "Male" / "Female"
-      const [age, setAge] = useState("");           // Edad
-      const [mental, setMental] = useState("");     // Estado mental (valor numérico)
-      const [nrsPain, setNrsPain] = useState("");   // Escala de dolor NRS (valor numérico)
-      const [sbp, setSbp] = useState("");           // Systolic Blood Pressure
-      const [dbp, setDbp] = useState("");           // Diastolic Blood Pressure
-      const [hr, setHr] = useState("");             // Heart Rate
-      const [rr, setRr] = useState("");             // Respiratory Rate
-      const [bt, setBt] = useState("");             // Body Temperature
-      const [saturation, setSaturation] = useState(""); // Oxygen Saturation
-
-      // 2) Estado para controlar si estamos "enviando" (mostrar spinner) o no
-      const [isLoading, setIsLoading] = useState(false);
-
-      // 3) Estado para guardar el resultado (número 1–5) y el mensaje de texto que acompaña
-      const [resultKtas, setResultKtas] = useState(null);
-      const [resultText, setResultText] = useState("");
-
-      // 4) Control para hacer fade-out al formulario
-      const [formFaded, setFormFaded] = useState(false);
-
-      // 5) Función que se llama al hacer clic en “Clasificar”:
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        // A) Activamos animación de fade-out en el formulario
-        setFormFaded(true);
-
-        // B) Mostramos el spinner
-        setIsLoading(true);
-
-        // C) Preparamos el JSON tal como lo espera la API. 
-        //    Los nombres de propiedad deben coincidir EXACTAMENTE con las columnas del dataset:
-        const payload = {
-          Sex: sex,
-          Age: Number(age),
-          Mental: Number(mental),
-          NRS_pain: Number(nrsPain),
-          SBP: Number(sbp),
-          DBP: Number(dbp),
-          HR: Number(hr),
-          RR: Number(rr),
-          BT: Number(bt),
-          Saturation: Number(saturation)
-        };
-
-        // D) Tiempo “artificial” de espera para que se vea la animación (opcional):
-        //    Se puede quitar en producción.
-        await new Promise(res => setTimeout(res, 500));
-
-        try {
-          // E) Aquí va la llamada real a la API. Como aún no tienen la URL definitiva,
-          //    dejamos marcado el espacio donde hay que ponerla, junto con la API Key.
-          const API_URL = "https://TU_ENDPOINT_AWS/ktas-classify"; 
-          const API_KEY = "TU_API_KEY_AQUI"; 
-          
-          const response = await fetch(API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": API_KEY        // Ejemplo de header con API Key
-            },
-            body: JSON.stringify(payload)
-          });
-
-          if (!response.ok) {
-            throw new Error("La API respondió con un error: " + response.status);
-          }
-
-          const data = await response.json();
-          // Se asume que el JSON de respuesta tiene un campo "ktas" con valor entero 1–5.
-          // Ejemplo de body de respuesta: { "ktas": 3 }
-          const ktasValue = data.ktas;
-
-          // F) Según el número (1–5), decidimos color y texto asociado:
-          let bgColor = "#ffffff";
-          let text = "";
-          switch (ktasValue) {
-            case 1:
-              bgColor = "#E74C3C"; // Rojo
-              text = "KTAS 1 - Resucitación: Emergencia inmediata, riesgo vital";
-              break;
-            case 2:
-              bgColor = "#E67E22"; // Naranja
-              text = "KTAS 2 - Emergencia: Muy urgente, requiere atención rápida";
-              break;
-            case 3:
-              bgColor = "#F1C40F"; // Amarillo
-              text = "KTAS 3 - Urgente: Atención en tiempo razonable";
-              break;
-            case 4:
-              bgColor = "#2ECC71"; // Verde
-              text = "KTAS 4 - Poco urgente: Puede esperar";
-              break;
-            case 5:
-              bgColor = "#3498DB"; // Azul claro
-              text = "KTAS 5 - No urgente: Sin urgencia, puede esperar mucho tiempo";
-              break;
-            default:
-              bgColor = "#5d5656"; // Gris claro si algo falla
-              text = "Error: respuesta inesperada de la API";
-              break;
-          }
-
-          // G) Cambiamos el color de fondo del body
-          document.body.style.backgroundColor = bgColor;
-
-          // H) Guardamos en estados para mostrar el mensaje
-          setResultKtas(ktasValue);
-          setResultText(text);
-        } catch (error) {
-          console.error(error);
-          // En caso de error, volvemos a fondo blanco y mostramos mensaje genérico:
-          document.body.style.backgroundColor = "#ffffff";
-          setResultKtas(null);
-          setResultText("Ocurrió un error al comunicarse con la API.");
-        } finally {
-          // I) Ocultamos el spinner
-          setIsLoading(false);
-        }
-      };
-
-      // 6) Función para "reiniciar" todo y volver a mostrar el formulario
-      const handleReset = () => {
-        // Restaurar color de fondo
-        document.body.style.backgroundColor = "#ffffff";
-        // Resetear todos los campos
-        setSex("Male");
-        setAge("");
-        setMental("");
-        setNrsPain("");
-        setSbp("");
-        setDbp("");
-        setHr("");
-        setRr("");
-        setBt("");
-        setSaturation("");
-        // Resetear resultado y loader
-        setResultKtas(null);
-        setResultText("");
-        setIsLoading(false);
-        // Volver a mostrar formulario (levantar fade-out)
-        setFormFaded(false);
-      };
-
-      return (
-        <div className="app-container">
-          {/* 1) Si aún no hay resultado, mostramos el formulario (con posible fade-out) */}
-          {resultKtas === null && (
-            <div className={`form-container ${formFaded ? "fade-out hidden" : ""}`}>
-              <h2>Clasificación KTAS</h2>
-              <form onSubmit={handleSubmit}>
-                {/* ====== CAMPO Sex (sexo biológico): dropdown con dos opciones ====== */}
-                <div className="form-group">
-                  <label htmlFor="sex">Sex (Biological Sex)</label>
-                  <select
-                    id="sex"
-                    value={sex}
-                    onChange={(e) => setSex(e.target.value)}
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-
-                {/* ====== CAMPO Age ====== */}
-                <div className="form-group">
-                  <label htmlFor="age">Age</label>
-                  <input
-                    id="age"
-                    type="number"
-                    placeholder="Age"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO Mental ====== */}
-                <div className="form-group">
-                  <label htmlFor="mental">Mental (Score)</label>
-                  <input
-                    id="mental"
-                    type="number"
-                    placeholder="Mental"
-                    value={mental}
-                    onChange={(e) => setMental(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO NRS_pain ====== */}
-                <div className="form-group">
-                  <label htmlFor="nrsPain">NRS Pain (0–10)</label>
-                  <input
-                    id="nrsPain"
-                    type="number"
-                    placeholder="NRS Pain"
-                    min="0"
-                    max="10"
-                    value={nrsPain}
-                    onChange={(e) => setNrsPain(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO SBP ====== */}
-                <div className="form-group">
-                  <label htmlFor="sbp">Systolic Blood Pressure (SBP)</label>
-                  <input
-                    id="sbp"
-                    type="number"
-                    placeholder="SBP"
-                    value={sbp}
-                    onChange={(e) => setSbp(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO DBP ====== */}
-                <div className="form-group">
-                  <label htmlFor="dbp">Diastolic Blood Pressure (DBP)</label>
-                  <input
-                    id="dbp"
-                    type="number"
-                    placeholder="DBP"
-                    value={dbp}
-                    onChange={(e) => setDbp(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO HR ====== */}
-                <div className="form-group">
-                  <label htmlFor="hr">Heart Rate (HR)</label>
-                  <input
-                    id="hr"
-                    type="number"
-                    placeholder="Heart Rate"
-                    value={hr}
-                    onChange={(e) => setHr(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO RR ====== */}
-                <div className="form-group">
-                  <label htmlFor="rr">Respiratory Rate (RR)</label>
-                  <input
-                    id="rr"
-                    type="number"
-                    placeholder="Respiratory Rate"
-                    value={rr}
-                    onChange={(e) => setRr(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO BT ====== */}
-                <div className="form-group">
-                  <label htmlFor="bt">Body Temperature (BT)</label>
-                  <input
-                    id="bt"
-                    type="number"
-                    step="0.1"
-                    placeholder="Body Temperature"
-                    value={bt}
-                    onChange={(e) => setBt(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* ====== CAMPO Saturation ====== */}
-                <div className="form-group">
-                  <label htmlFor="saturation">Oxygen Saturation (%)</label>
-                  <input
-                    id="saturation"
-                    type="number"
-                    placeholder="Saturation"
-                    value={saturation}
-                    onChange={(e) => setSaturation(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Botón para enviar datos */}
-                <button type="submit" className="submit-button">
-                  Clasificar
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* 2) Si isLoading=true, mostramos spinner */}
-          {isLoading && (
-            <div className="loader-container">
-              <div className="spinner"></div>
-            </div>
-          )}
-
-          {/* 3) Si tenemos resultado (resultKtas !== null), mostramos el mensaje */}
-          {(!isLoading && resultKtas !== null) && (
-            <div className="loader-container">
-              <div className="result-message">{resultText}</div>
-              {/* Botón para reiniciar y volver a mostrar el formulario */}
-              <button className="reset-button" onClick={handleReset}>
-                Nueva Clasificación
-              </button>
-            </div>
-          )}
+  <div class="app-container">
+    <!-- 1) Formulario de entrada -->
+    <div id="form-container" class="form-container">
+      <h2>Clasificación NEWS KTAS</h2>
+      <form id="ktas-form">
+        <!-- Sexo biológico: ahora es un input con placeholder -->
+        <div class="form-group">
+          <label for="sex">Sex (Biological Sex)</label>
+          <input id="sex" type="text" placeholder="Male or Female" required>
         </div>
-      );
-    }
+        <!-- Edad -->
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input id="age" type="number" placeholder="Age" required>
+        </div>
+        <!-- Mental (score) -->
+        <div class="form-group">
+          <label for="mental">Mental (Score)</label>
+          <input id="mental" type="number" placeholder="Mental" required>
+        </div>
+        <!-- NRS Pain -->
+        <div class="form-group">
+          <label for="nrsPain">NRS Pain (0–10)</label>
+          <input id="nrsPain" type="number" min="0" max="10" placeholder="NRS Pain" required>
+        </div>
+        <!-- Systolic BP -->
+        <div class="form-group">
+          <label for="sbp">Systolic Blood Pressure (SBP)</label>
+          <input id="sbp" type="number" placeholder="SBP" required>
+        </div>
+        <!-- Diastolic BP -->
+        <div class="form-group">
+          <label for="dbp">Diastolic Blood Pressure (DBP)</label>
+          <input id="dbp" type="number" placeholder="DBP" required>
+        </div>
+        <!-- Heart Rate -->
+        <div class="form-group">
+          <label for="hr">Heart Rate (HR)</label>
+          <input id="hr" type="number" placeholder="Heart Rate" required>
+        </div>
+        <!-- Respiratory Rate -->
+        <div class="form-group">
+          <label for="rr">Respiratory Rate (RR)</label>
+          <input id="rr" type="number" placeholder="Respiratory Rate" required>
+        </div>
+        <!-- Body Temperature -->
+        <div class="form-group">
+          <label for="bt">Body Temperature (BT)</label>
+          <input id="bt" type="number" step="0.1" placeholder="Body Temperature" required>
+        </div>
+        <!-- Oxygen Saturation -->
+        <div class="form-group">
+          <label for="saturation">Oxygen Saturation (%)</label>
+          <input id="saturation" type="number" placeholder="Saturation" required>
+        </div>
+        <!-- Botón enviar -->
+        <button type="submit" class="submit-button">Clasificar</button>
+      </form>
+    </div>
 
-    // C) Montamos el componente App en el div#root
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+    <!-- 2) Loader centrado (invisible al inicio) -->
+    <div id="loader-container" class="loader-container hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- 3) Resultado + botón Reset (invisible al inicio) -->
+    <div id="result-container" class="loader-container hidden">
+      <div id="result-message" class="result-message"></div>
+      <button id="reset-button" class="reset-button">Nueva Clasificación</button>
+    </div>
+  </div>
+
+  <!-- Vinculamos el JS -->
+  <script src="script.js"></script>
 </body>
 </html>
